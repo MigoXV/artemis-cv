@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from artimes_cv.protos.detector import common_pb2 as artimes__cv_dot_protos_dot_detector_dot_common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n)artimes_cv/protos/detector/detector.proto\x12\tvision.v1\x1a\'artimes_cv/protos/detector/common.proto\"I\n\nImageFrame\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\r\n\x05width\x18\x02 \x01(\r\x12\x0e\n\x06height\x18\x03 \x01(\r\x12\x0e\n\x06\x66ormat\x18\x04 \x01(\t\"z\n\rDetectRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12$\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x15.vision.v1.ImageFrame\x12\x17\n\x0fscore_threshold\x18\x03 \x01(\x02\x12\x16\n\x0emax_detections\x18\x04 \x01(\r\"K\n\x0b\x44\x65tectReply\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12(\n\ndetections\x18\x02 \x03(\x0b\x32\x14.vision.v1.Detection\"c\n\x11\x45ncodedVideoChunk\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x0e\n\x06pts_ms\x18\x02 \x01(\x04\x12\x0e\n\x06\x64ts_ms\x18\x03 \x01(\x04\x12\x11\n\tkey_frame\x18\x04 \x01(\x08\x12\r\n\x05\x63odec\x18\x05 \x01(\t\"\xa2\x01\n\x13StreamDetectRequest\x12)\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x17.vision.v1.StreamConfigH\x00\x12&\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x15.vision.v1.ImageFrameH\x00\x12-\n\x05\x63hunk\x18\x03 \x01(\x0b\x32\x1c.vision.v1.EncodedVideoChunkH\x00\x42\t\n\x07payload\"t\n\x11StreamDetectReply\x12\x11\n\tstream_id\x18\x01 \x01(\t\x12\x12\n\nrequest_id\x18\x02 \x01(\t\x12\x0e\n\x06pts_ms\x18\x03 \x01(\x04\x12(\n\ndetections\x18\x04 \x03(\x0b\x32\x14.vision.v1.Detection2\x9e\x01\n\x0e\x44\x65tectorEngine\x12:\n\x06\x44\x65tect\x12\x18.vision.v1.DetectRequest\x1a\x16.vision.v1.DetectReply\x12P\n\x0cStreamDetect\x12\x1e.vision.v1.StreamDetectRequest\x1a\x1c.vision.v1.StreamDetectReply(\x01\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n)artimes_cv/protos/detector/detector.proto\x12\tvision.v1\x1a\'artimes_cv/protos/detector/common.proto\"I\n\nImageFrame\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\r\n\x05width\x18\x02 \x01(\r\x12\x0e\n\x06height\x18\x03 \x01(\r\x12\x0e\n\x06\x66ormat\x18\x04 \x01(\t\"z\n\rDetectRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12$\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x15.vision.v1.ImageFrame\x12\x17\n\x0fscore_threshold\x18\x03 \x01(\x02\x12\x16\n\x0emax_detections\x18\x04 \x01(\r\"K\n\x0b\x44\x65tectReply\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12(\n\ndetections\x18\x02 \x03(\x0b\x32\x14.vision.v1.Detection\"c\n\x11\x45ncodedVideoChunk\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x0e\n\x06pts_ms\x18\x02 \x01(\x04\x12\x0e\n\x06\x64ts_ms\x18\x03 \x01(\x04\x12\x11\n\tkey_frame\x18\x04 \x01(\x08\x12\r\n\x05\x63odec\x18\x05 \x01(\t\"\xa2\x01\n\x13StreamDetectRequest\x12)\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x17.vision.v1.StreamConfigH\x00\x12&\n\x05\x66rame\x18\x02 \x01(\x0b\x32\x15.vision.v1.ImageFrameH\x00\x12-\n\x05\x63hunk\x18\x03 \x01(\x0b\x32\x1c.vision.v1.EncodedVideoChunkH\x00\x42\t\n\x07payload\"\x86\x01\n\x11StreamDetectReply\x12\x11\n\tstream_id\x18\x01 \x01(\t\x12\x12\n\nrequest_id\x18\x02 \x01(\t\x12\x0e\n\x06pts_ms\x18\x03 \x01(\x04\x12(\n\ndetections\x18\x04 \x03(\x0b\x32\x14.vision.v1.Detection\x12\x10\n\x08\x66rame_id\x18\x05 \x01(\x04\x32\x9e\x01\n\x0e\x44\x65tectorEngine\x12:\n\x06\x44\x65tect\x12\x18.vision.v1.DetectRequest\x1a\x16.vision.v1.DetectReply\x12P\n\x0cStreamDetect\x12\x1e.vision.v1.StreamDetectRequest\x1a\x1c.vision.v1.StreamDetectReply(\x01\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -42,8 +42,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_ENCODEDVIDEOCHUNK']._serialized_end=472
   _globals['_STREAMDETECTREQUEST']._serialized_start=475
   _globals['_STREAMDETECTREQUEST']._serialized_end=637
-  _globals['_STREAMDETECTREPLY']._serialized_start=639
-  _globals['_STREAMDETECTREPLY']._serialized_end=755
-  _globals['_DETECTORENGINE']._serialized_start=758
-  _globals['_DETECTORENGINE']._serialized_end=916
+  _globals['_STREAMDETECTREPLY']._serialized_start=640
+  _globals['_STREAMDETECTREPLY']._serialized_end=774
+  _globals['_DETECTORENGINE']._serialized_start=777
+  _globals['_DETECTORENGINE']._serialized_end=935
 # @@protoc_insertion_point(module_scope)

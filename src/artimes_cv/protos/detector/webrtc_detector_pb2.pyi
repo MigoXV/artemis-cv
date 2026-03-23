@@ -199,9 +199,11 @@ class StreamDetectionsReply(_message.Message):
     REQUEST_ID_FIELD_NUMBER: _builtins.int
     PTS_MS_FIELD_NUMBER: _builtins.int
     DETECTIONS_FIELD_NUMBER: _builtins.int
+    FRAME_ID_FIELD_NUMBER: _builtins.int
     stream_id: _builtins.str
     request_id: _builtins.str
     pts_ms: _builtins.int
+    frame_id: _builtins.int
     @_builtins.property
     def detections(self) -> _containers.RepeatedCompositeFieldContainer[_common_pb2.Detection]: ...
     def __init__(
@@ -211,8 +213,9 @@ class StreamDetectionsReply(_message.Message):
         request_id: _builtins.str = ...,
         pts_ms: _builtins.int = ...,
         detections: _abc.Iterable[_common_pb2.Detection] | None = ...,
+        frame_id: _builtins.int = ...,
     ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["detections", b"detections", "pts_ms", b"pts_ms", "request_id", b"request_id", "stream_id", b"stream_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["detections", b"detections", "frame_id", b"frame_id", "pts_ms", b"pts_ms", "request_id", b"request_id", "stream_id", b"stream_id"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___StreamDetectionsReply: _TypeAlias = StreamDetectionsReply  # noqa: Y015

@@ -13,15 +13,32 @@ logger = logging.getLogger(__name__)
 
 
 class WebRtcDetectorServicer(pb2_grpc.WebRtcDetectorEngineServicer):
-    def __init__(self):
-        self._manager = WebRtcSessionManager()
+    def __init__(
+        self,
+        model_dir: str,
+        device: str,
+        enable_display: bool,
+        initial_frequency: float,
+        min_cutoff: float,
+        beta: float,
+        d_cutoff: float,
+    ):
+        self._manager = WebRtcSessionManager(
+            model_dir=model_dir,
+            device=device,
+            enable_display=enable_display,
+            initial_frequency=initial_frequency,
+            min_cutoff=min_cutoff,
+            beta=beta,
+            d_cutoff=d_cutoff,
+        )
 
     async def CreateStream(
         self,
         request: pb2.CreateStreamRequest,
         context: grpc.aio.ServicerContext,
     ) -> pb2.CreateStreamReply:
-        session = self._manager.create()
+        session = self._manager.create(request.config)
         local_desc = await session.create_offer()
 
         return pb2.CreateStreamReply(
@@ -59,16 +76,20 @@ class WebRtcDetectorServicer(pb2_grpc.WebRtcDetectorEngineServicer):
         try:
             while session.running:
                 try:
-                    stream_id, req_id, pts_ms, det = await asyncio.wait_for(
+                    stream_id, req_id, frame_id, pts_ms, det = await asyncio.wait_for(
                         det_queue.get(), timeout=1.0
                     )
                     yield pb2.StreamDetectionsReply(
                         stream_id=stream_id,
                         request_id=req_id,
                         pts_ms=pts_ms,
-                        detections=[det],
+                        detections=[det] if det is not None else [],
+                        frame_id=frame_id,
                     )
                 except asyncio.TimeoutError:
                     continue
+        except Exception:
+            logger.exception("StreamDetections failed for stream %s", request.stream_id)
+            raise
         finally:
             session.detach_detection_queue(det_queue)

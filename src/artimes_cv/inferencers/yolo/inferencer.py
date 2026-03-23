@@ -23,10 +23,6 @@ class YoloPointInferencer:
         self.imgsz = imgsz
         self.device = torch.device(device)
 
-        model_dir = Path(model_dir)
-        if not model_dir.exists():
-            raise FileNotFoundError(f"模型目录不存在: {model_dir}")
-
         self.model = AutoModel.from_pretrained(str(model_dir), trust_remote_code=True)
         self.model.to(self.device)
         self.model.eval()

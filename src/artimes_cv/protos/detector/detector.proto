@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package vision.v1;
+
+import "artimes_cv/protos/detector/common.proto";
+
+service DetectorEngine {
+  // 输入单帧图像，返回该帧中的目标检测结果。
+  rpc Detect(DetectRequest) returns (DetectReply);
+
+  // 输入连续视频流，持续返回该流中的目标检测结果。
+  rpc StreamDetect(stream StreamDetectRequest) returns (stream StreamDetectReply);
+}
+
+message ImageFrame {
+  bytes data = 1;   // 原始图像字节，例如 RGB/BGR 编码后的连续内存或压缩图像
+  uint32 width = 2;
+  uint32 height = 3;
+  string format = 4; // 例如 "rgb8"、"bgr8"、"jpeg"、"png"、"h264"
+}
+
+message DetectRequest {
+  string request_id = 1;
+  ImageFrame frame = 2;
+  float score_threshold = 3;
+  uint32 max_detections = 4;
+}
+
+message DetectReply {
+  string request_id = 1;
+  repeated Detection detections = 2;
+}
+
+message EncodedVideoChunk {
+  bytes data = 1;   // 编码后的视频载荷，支持 H.264 NALU 或 Annex-B 字节流
+  uint64 pts_ms = 2;
+  uint64 dts_ms = 3;
+  bool key_frame = 4;
+  string codec = 5; // 例如 "h264"
+}
+
+message StreamDetectRequest {
+  oneof payload {
+    StreamConfig config = 1;
+    ImageFrame frame = 2;
+    EncodedVideoChunk chunk = 3;
+  }
+}
+
+message StreamDetectReply {
+  string stream_id = 1;
+  string request_id = 2;
+  uint64 pts_ms = 3;
+  repeated Detection detections = 4;
+}

@@ -1,5 +1,5 @@
 [project]
-name = "artimes-cv"
+name = "artemis-cv"
 version = "0.1.0"
 description = ""
 authors = [
@@ -22,10 +22,10 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "artimes_cv", from = "src"}]
+packages = [{include = "artemis_cv", from = "src"}]
 
 [tool.poetry.scripts]
-artimes-cv = "artimes_cv.commands.app:app"
+artemis-cv = "artemis_cv.commands.app:app"
 
 [[tool.poetry.source]]
 name = "tuna"

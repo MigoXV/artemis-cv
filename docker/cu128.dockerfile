@@ -27,4 +27,4 @@ RUN poetry install
 EXPOSE 50051
 
 # 默认入口
-CMD ["poetry", "run", "python", "-m", "artimes_cv.commands.app"]
+CMD ["poetry", "run", "python", "-m", "artemis_cv.commands.app"]

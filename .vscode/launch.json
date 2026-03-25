@@ -8,7 +8,7 @@
             "name": "grpc app",
             "type": "debugpy",
             "request": "launch",
-            "program": "src/artimes_cv/commands/app.py",
+            "program": "src/artemis_cv/commands/app.py",
             "console": "integratedTerminal"
         },
         {

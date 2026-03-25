@@ -5,8 +5,8 @@ from pathlib import Path
 import grpc
 import typer
 
-from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
-from artimes_cv.servicers.webrtc_servicer import WebRtcDetectorServicer
+from artemis_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
+from artemis_cv.servicers.webrtc_servicer import WebRtcDetectorServicer
 
 app = typer.Typer(name="artimes-cv")
 DEFAULT_MODEL_DIR = (

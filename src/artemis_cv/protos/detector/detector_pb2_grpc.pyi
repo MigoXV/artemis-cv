@@ -3,7 +3,7 @@
 isort:skip_file
 """
 
-from artimes_cv.protos.detector import detector_pb2 as _detector_pb2
+from artemis_cv.protos.detector import detector_pb2 as _detector_pb2
 from collections import abc as _abc
 from grpc import aio as _aio
 import abc as _abc_1

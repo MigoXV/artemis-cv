@@ -3,7 +3,7 @@
 isort:skip_file
 """
 
-from artimes_cv.protos.detector import common_pb2 as _common_pb2
+from artemis_cv.protos.detector import common_pb2 as _common_pb2
 from collections import abc as _abc
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message

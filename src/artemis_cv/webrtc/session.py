@@ -7,7 +7,7 @@ from typing import Tuple
 
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 
-from artimes_cv.inferencers.yolo import SharedYoloPointInferencer
+from artemis_cv.inferencers.yolo import SharedYoloPointInferencer
 
 logger = logging.getLogger(__name__)
 

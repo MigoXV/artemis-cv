@@ -6,7 +6,7 @@ import av
 import cv2
 from tqdm import tqdm
 
-from artimes_cv.inferencers.yolo import YoloPointInferencer
+from artemis_cv.inferencers.yolo import YoloPointInferencer
 
 ROOT = Path(__file__).resolve().parents[2]
 HF_MODEL_DIR = ROOT / 'model-bin' / 'artimes-yolov8n-260323-1629'

@@ -15,9 +15,9 @@ import grpc
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
 from av import VideoFrame
 
-from artimes_cv.protos.detector import common_pb2
-from artimes_cv.protos.detector import webrtc_detector_pb2 as pb2
-from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
+from artemis_cv.protos.detector import common_pb2
+from artemis_cv.protos.detector import webrtc_detector_pb2 as pb2
+from artemis_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_ADDR = "localhost:50052"

@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 import torch
 
-from artimes_cv.inferencers.smoothers import OneEuroPointSmoother
+from artemis_cv.inferencers.smoothers import OneEuroPointSmoother
 
 from .inferencer import YoloPointInferencer
 

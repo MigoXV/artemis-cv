@@ -18,42 +18,42 @@ DEFAULT_MODEL_DIR = (
 def serve(
     host: str = typer.Option(
         "0.0.0.0",
-        envvar="ARTIMES_CV_HOST",
+        envvar="ARTEMIS_CV_HOST",
         help="监听地址",
     ),
     port: int = typer.Option(
         50051,
-        envvar="ARTIMES_CV_PORT",
+        envvar="ARTEMIS_CV_PORT",
         help="监听端口",
     ),
     model_dir: str = typer.Option(
         str(DEFAULT_MODEL_DIR),
-        envvar="ARTIMES_CV_MODEL_DIR",
+        envvar="ARTEMIS_CV_MODEL_DIR",
         help="YOLO 模型目录",
     ),
     device: str = typer.Option(
         "cpu",
-        envvar="ARTIMES_CV_DEVICE",
+        envvar="ARTEMIS_CV_DEVICE",
         help="推理设备，例如 cpu / cuda:0",
     ),
     initial_frequency: float = typer.Option(
         30.0,
-        envvar="ARTIMES_CV_INITIAL_FREQUENCY",
+        envvar="ARTEMIS_CV_INITIAL_FREQUENCY",
         help="One Euro Filter 初始频率",
     ),
     min_cutoff: float = typer.Option(
         1.2,
-        envvar="ARTIMES_CV_MIN_CUTOFF",
+        envvar="ARTEMIS_CV_MIN_CUTOFF",
         help="One Euro Filter min_cutoff",
     ),
     beta: float = typer.Option(
         0.08,
-        envvar="ARTIMES_CV_BETA",
+        envvar="ARTEMIS_CV_BETA",
         help="One Euro Filter beta",
     ),
     d_cutoff: float = typer.Option(
         1.0,
-        envvar="ARTIMES_CV_D_CUTOFF",
+        envvar="ARTEMIS_CV_D_CUTOFF",
         help="One Euro Filter d_cutoff",
     ),
 ):

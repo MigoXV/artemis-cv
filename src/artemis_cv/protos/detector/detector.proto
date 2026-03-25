@@ -52,4 +52,5 @@ message StreamDetectReply {
   string request_id = 2;
   uint64 pts_ms = 3;
   repeated Detection detections = 4;
+  uint64 frame_id = 5;
 }

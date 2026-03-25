@@ -1,5 +1,5 @@
 [project]
-name = "artimes-cv"
+name = "artemis-cv"
 version = "0.1.0"
 description = ""
 authors = [
@@ -15,11 +15,17 @@ dependencies = [
     "pillow (>=12.1.1,<13.0.0)",
     "tqdm (>=4.67.3,<5.0.0)",
     "scipy (<1.16)",
-    "typer (>=0.24.1,<0.25.0)"
+    "typer (>=0.24.1,<0.25.0)",
+    "aiortc (>=1.14.0,<2.0.0)",
+    "safetensors (>=0.7.0,<0.8.0)",
+    "transformers (>=5.3.0,<6.0.0)"
 ]
 
 [tool.poetry]
-packages = [{include = "artimes_cv", from = "src"}]
+packages = [{include = "artemis_cv", from = "src"}]
+
+[tool.poetry.scripts]
+artemis-cv = "artemis_cv.commands.app:app"
 
 [[tool.poetry.source]]
 name = "tuna"

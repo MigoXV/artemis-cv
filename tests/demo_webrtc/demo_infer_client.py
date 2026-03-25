@@ -15,15 +15,15 @@ import grpc
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
 from av import VideoFrame
 
-from artimes_cv.protos.detector import common_pb2
-from artimes_cv.protos.detector import webrtc_detector_pb2 as pb2
-from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
+from artemis_cv.protos.detector import common_pb2
+from artemis_cv.protos.detector import webrtc_detector_pb2 as pb2
+from artemis_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_ADDR = "localhost:50052"
 VIDEO_PATH = ROOT / "data-bin" / "videos" / "slow.mp4"
 SCORE_THRESHOLD = 0.0
-FRAME_DOWNSAMPLE = 4
+FRAME_DOWNSAMPLE = 1
 SYNC_WAIT_SECONDS = 0.75
 MAX_PENDING_FRAMES = 120
 MAX_PENDING_DETECTIONS = 240

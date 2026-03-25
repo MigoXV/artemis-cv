@@ -3,9 +3,9 @@
 import logging
 import uuid
 
-from artimes_cv.inferencers.yolo import SharedYoloPointInferencer
-from artimes_cv.protos.detector import common_pb2
-from artimes_cv.webrtc.session import WebRtcSession
+from artemis_cv.inferencers.yolo import SharedYoloPointInferencer
+from artemis_cv.protos.detector import common_pb2
+from artemis_cv.webrtc.session import WebRtcSession
 
 logger = logging.getLogger(__name__)
 

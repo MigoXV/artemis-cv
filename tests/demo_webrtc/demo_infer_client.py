@@ -7,6 +7,7 @@ import threading
 import time
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any
 
 import av
 import cv2
@@ -19,29 +20,27 @@ from artimes_cv.protos.detector import webrtc_detector_pb2 as pb2
 from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
 
 ROOT = Path(__file__).resolve().parents[2]
+SERVER_ADDR = "localhost:50052"
 VIDEO_PATH = ROOT / "data-bin" / "videos" / "slow.mp4"
+SCORE_THRESHOLD = 0.0
+FRAME_DOWNSAMPLE = 4
 SYNC_WAIT_SECONDS = 0.75
 MAX_PENDING_FRAMES = 120
 MAX_PENDING_DETECTIONS = 240
 LATEST_DETECTION_HOLD_SECONDS = 1.0
 
 
-class VideoFileTrack(MediaStreamTrack):
-    """将本地视频文件包装成 WebRTC 视频轨。"""
-
-    kind = "video"
+class VideoFileSource:
+    """本地视频文件读取器。"""
 
     def __init__(self, video_path: Path, loop: bool = True):
-        super().__init__()
         self.video_path = video_path
         self.loop = loop
-        self.display_queue: queue.Queue = queue.Queue(maxsize=MAX_PENDING_FRAMES)
         self._container: av.container.InputContainer | None = None
         self._frames = None
         self._fps = 30.0
         self._time_base = fractions.Fraction(1, 30)
-        self._start = time.time()
-        self._pts = 0
+        self._source_frame_index = -1
         self._open_video()
 
     def _open_video(self) -> None:
@@ -56,37 +55,30 @@ class VideoFileTrack(MediaStreamTrack):
             self._fps = float(video_stream.average_rate)
         rounded_fps = max(1, round(self._fps))
         self._time_base = fractions.Fraction(1, rounded_fps)
+        self._source_frame_index = -1
 
-    async def recv(self) -> VideoFrame:
-        self._pts += 1
-        target = self._start + self._pts / self._fps
-        wait = target - time.time()
-        if wait > 0:
-            await asyncio.sleep(wait)
-
+    def read_next(self) -> tuple[Any, int, int]:
         while True:
             try:
                 av_frame = next(self._frames)
-                break
             except StopIteration:
                 if not self.loop:
                     raise EOFError("video ended")
                 self._open_video()
+                continue
 
-        bgr = av_frame.to_ndarray(format="bgr24")
-        pts_ms = self._pts_to_ms(self._pts, self._time_base)
+            self._source_frame_index += 1
+            bgr = av_frame.to_ndarray(format="bgr24")
+            pts_ms = self._pts_to_ms(self._source_frame_index, self._time_base)
+            return bgr, self._source_frame_index, pts_ms
 
-        try:
-            self.display_queue.put_nowait(
-                (bgr.copy(), self._pts, pts_ms, time.monotonic())
-            )
-        except queue.Full:
-            pass
+    @property
+    def fps(self) -> float:
+        return self._fps
 
-        frame = VideoFrame.from_ndarray(bgr, format="bgr24")
-        frame.pts = self._pts
-        frame.time_base = self._time_base
-        return frame
+    @property
+    def time_base(self) -> fractions.Fraction:
+        return self._time_base
 
     @staticmethod
     def _pts_to_ms(pts: int, time_base: fractions.Fraction) -> int:
@@ -98,10 +90,94 @@ class VideoFileTrack(MediaStreamTrack):
             self._container = None
 
 
+class VideoFileTrack(MediaStreamTrack):
+    """将本地视频文件包装成 WebRTC 视频轨。"""
+
+    kind = "video"
+
+    def __init__(self, video_path: Path, loop: bool = True, frame_downsample: int = 1):
+        super().__init__()
+        self.frame_downsample = max(1, frame_downsample)
+        self.source = VideoFileSource(video_path=video_path, loop=loop)
+        self._start = time.time()
+        self._send_index = 0
+
+    async def recv(self) -> VideoFrame:
+        source_frame_index = self._send_index * self.frame_downsample
+        target = self._start + source_frame_index / self.source.fps
+        wait = target - time.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+
+        bgr = None
+        frame_index = 0
+        for _ in range(self.frame_downsample):
+            bgr, frame_index, _ = self.source.read_next()
+
+        self._send_index += 1
+        frame = VideoFrame.from_ndarray(bgr, format="bgr24")
+        frame.pts = frame_index
+        frame.time_base = self.source.time_base
+        return frame
+
+    def close(self) -> None:
+        self.source.close()
+
+
+class VideoDisplayPlayer:
+    """本地全帧播放，用于显示与叠加检测结果。"""
+
+    def __init__(self, video_path: Path, loop: bool = True):
+        self.source = VideoFileSource(video_path=video_path, loop=loop)
+        self.display_queue: queue.Queue = queue.Queue(maxsize=MAX_PENDING_FRAMES)
+        self._start = time.time()
+        self._thread: threading.Thread | None = None
+        self._stop_event = threading.Event()
+
+    def start(self) -> None:
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                img, frame_index, pts_ms = self.source.read_next()
+            except EOFError:
+                break
+
+            target = self._start + frame_index / self.source.fps
+            wait = target - time.time()
+            if wait > 0:
+                time.sleep(wait)
+
+            try:
+                self.display_queue.put_nowait(
+                    (img, frame_index, pts_ms, time.monotonic())
+                )
+            except queue.Full:
+                try:
+                    self.display_queue.get_nowait()
+                except queue.Empty:
+                    pass
+                try:
+                    self.display_queue.put_nowait(
+                        (img, frame_index, pts_ms, time.monotonic())
+                    )
+                except queue.Full:
+                    pass
+
+    def close(self) -> None:
+        self._stop_event.set()
+        self.source.close()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+
+
 async def run_client(
     server_addr: str = "localhost:50051",
     video_path: Path = VIDEO_PATH,
     score_threshold: float = 0.0,
+    frame_downsample: int = 1,
 ):
     channel = grpc.aio.insecure_channel(server_addr)
     stub = pb2_grpc.WebRtcDetectorEngineStub(channel)
@@ -119,7 +195,12 @@ async def run_client(
     print(f"Stream created: {stream_id}")
 
     pc = RTCPeerConnection()
-    video_track = VideoFileTrack(video_path=video_path, loop=True)
+    display_player = VideoDisplayPlayer(video_path=video_path, loop=True)
+    video_track = VideoFileTrack(
+        video_path=video_path,
+        loop=True,
+        frame_downsample=frame_downsample,
+    )
     pc.addTrack(video_track)
 
     await pc.setRemoteDescription(
@@ -140,6 +221,7 @@ async def run_client(
         )
     )
     print("WebRTC connected!")
+    display_player.start()
 
     detection_by_sync_id: OrderedDict[int, pb2.StreamDetectionsReply] = OrderedDict()
     det_lock = threading.Lock()
@@ -173,7 +255,7 @@ async def run_client(
 
         while not stop_event.is_set():
             try:
-                img, frame_index, pts_ms, queued_at = video_track.display_queue.get(
+                img, frame_index, pts_ms, queued_at = display_player.display_queue.get(
                     timeout=0.05
                 )
                 pending_frames[pts_ms] = (img, frame_index, queued_at)
@@ -184,7 +266,7 @@ async def run_client(
 
             while True:
                 try:
-                    img, frame_index, pts_ms, queued_at = video_track.display_queue.get_nowait()
+                    img, frame_index, pts_ms, queued_at = display_player.display_queue.get_nowait()
                     pending_frames[pts_ms] = (img, frame_index, queued_at)
                     while len(pending_frames) > MAX_PENDING_FRAMES:
                         pending_frames.popitem(last=False)
@@ -290,6 +372,7 @@ async def run_client(
         pass
     finally:
         det_task.cancel()
+        display_player.close()
         video_track.close()
         await pc.close()
         await channel.close()
@@ -298,18 +381,12 @@ async def run_client(
 
 
 def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Demo WebRTC 推理客户端")
-    parser.add_argument("--server", default="localhost:50052", help="gRPC 服务端地址")
-    parser.add_argument("--video", type=Path, default=VIDEO_PATH, help="推流视频路径")
-    parser.add_argument("--score-threshold", type=float, default=0.0, help="服务端分数阈值")
-    args = parser.parse_args()
     asyncio.run(
         run_client(
-            server_addr=args.server,
-            video_path=args.video,
-            score_threshold=args.score_threshold,
+            server_addr=SERVER_ADDR,
+            video_path=VIDEO_PATH,
+            score_threshold=SCORE_THRESHOLD,
+            frame_downsample=max(1, FRAME_DOWNSAMPLE),
         )
     )
 

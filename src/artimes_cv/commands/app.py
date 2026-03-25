@@ -5,10 +5,8 @@ from pathlib import Path
 import grpc
 import typer
 
-from artimes_cv.protos.detector import detector_pb2_grpc as detector_pb2_grpc
 from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
-from artimes_cv.servicers.detector_servicer import DetectorServicer
-from artimes_cv.servicers.stub.servicer import WebRtcDetectorServicer
+from artimes_cv.servicers.webrtc_servicer import WebRtcDetectorServicer
 
 app = typer.Typer(name="artimes-cv")
 DEFAULT_MODEL_DIR = (
@@ -37,12 +35,6 @@ def serve(
         "cpu",
         envvar="ARTIMES_CV_DEVICE",
         help="推理设备，例如 cpu / cuda:0",
-    ),
-    enable_display: bool = typer.Option(
-        False,
-        "--enable-display/--disable-display",
-        envvar="ARTIMES_CV_ENABLE_DISPLAY",
-        help="是否在服务端弹出 OpenCV 预览窗口",
     ),
     initial_frequency: float = typer.Option(
         30.0,
@@ -73,18 +65,10 @@ def serve(
 
     async def _run():
         server = grpc.aio.server()
-        detector_pb2_grpc.add_DetectorEngineServicer_to_server(
-            DetectorServicer(
-                model_dir=model_dir,
-                device=device,
-            ),
-            server,
-        )
         pb2_grpc.add_WebRtcDetectorEngineServicer_to_server(
             WebRtcDetectorServicer(
                 model_dir=model_dir,
                 device=device,
-                enable_display=enable_display,
                 initial_frequency=initial_frequency,
                 min_cutoff=min_cutoff,
                 beta=beta,

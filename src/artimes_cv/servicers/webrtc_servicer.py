@@ -4,7 +4,8 @@ from collections.abc import AsyncIterator
 
 import grpc
 import grpc.aio
-
+from typing import Tuple
+from artimes_cv.protos.detector import common_pb2
 from artimes_cv.protos.detector import webrtc_detector_pb2 as pb2
 from artimes_cv.protos.detector import webrtc_detector_pb2_grpc as pb2_grpc
 from artimes_cv.webrtc import WebRtcSessionManager
@@ -17,7 +18,6 @@ class WebRtcDetectorServicer(pb2_grpc.WebRtcDetectorEngineServicer):
         self,
         model_dir: str,
         device: str,
-        enable_display: bool,
         initial_frequency: float,
         min_cutoff: float,
         beta: float,
@@ -26,11 +26,39 @@ class WebRtcDetectorServicer(pb2_grpc.WebRtcDetectorEngineServicer):
         self._manager = WebRtcSessionManager(
             model_dir=model_dir,
             device=device,
-            enable_display=enable_display,
             initial_frequency=initial_frequency,
             min_cutoff=min_cutoff,
             beta=beta,
             d_cutoff=d_cutoff,
+        )
+
+    @staticmethod
+    def _build_stream_detections_reply(
+        stream_id: str,
+        request_id: str,
+        frame_id: int,
+        pts_ms: int,
+        detection: Tuple[Tuple[float, float], Tuple[float, float], float],
+    ) -> pb2.StreamDetectionsReply:
+        (nx, ny), (px, py), score = detection
+        return pb2.StreamDetectionsReply(
+            stream_id=stream_id,
+            request_id=request_id,
+            pts_ms=pts_ms,
+            detections=[
+                common_pb2.Detection(
+                    class_name="yolo_point",
+                    class_id=0,
+                    score=float(score),
+                    geometry=common_pb2.DetectionGeometry(
+                        point=common_pb2.Point2D(x=px, y=py)
+                    ),
+                    normalized_geometry=common_pb2.DetectionGeometry(
+                        point=common_pb2.Point2D(x=nx, y=ny)
+                    ),
+                )
+            ],
+            frame_id=frame_id,
         )
 
     async def CreateStream(
@@ -76,15 +104,15 @@ class WebRtcDetectorServicer(pb2_grpc.WebRtcDetectorEngineServicer):
         try:
             while session.running:
                 try:
-                    stream_id, req_id, frame_id, pts_ms, det = await asyncio.wait_for(
-                        det_queue.get(), timeout=1.0
+                    stream_id, request_id, frame_id, pts_ms, detection = (
+                        await asyncio.wait_for(det_queue.get(), timeout=1.0)
                     )
-                    yield pb2.StreamDetectionsReply(
+                    yield self._build_stream_detections_reply(
                         stream_id=stream_id,
-                        request_id=req_id,
-                        pts_ms=pts_ms,
-                        detections=[det] if det is not None else [],
+                        request_id=request_id,
                         frame_id=frame_id,
+                        pts_ms=pts_ms,
+                        detection=detection,
                     )
                 except asyncio.TimeoutError:
                     continue

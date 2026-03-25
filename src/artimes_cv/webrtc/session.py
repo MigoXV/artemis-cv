@@ -1,14 +1,13 @@
-"""单条 WebRTC 流会话的连接生命周期与视频帧处理。"""
+"""单条 WebRTC 流会话的连接生命周期、视频接收与检测分发。"""
 
 import asyncio
 import logging
-import queue
 from dataclasses import dataclass
+from typing import Tuple
 
-from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
+from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 
-from artimes_cv.protos.detector import common_pb2
-from artimes_cv.servicers.webrtc_inference import WebRtcVisionInference
+from artimes_cv.inferencers.yolo import SharedYoloPointInferencer
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +23,16 @@ class PendingFrame:
 class WebRtcSession:
     """封装单条 WebRTC 流会话的完整生命周期。"""
 
-    def __init__(self, stream_id: str, inference: WebRtcVisionInference):
+    def __init__(
+        self,
+        stream_id: str,
+        inferencer: SharedYoloPointInferencer,
+        score_threshold: float,
+    ):
         self.stream_id = stream_id
         self.pc = RTCPeerConnection()
-        self.inference = inference
+        self.inferencer = inferencer
+        self.score_threshold = score_threshold
         self.running = True
         self._video_tasks: set[asyncio.Task] = set()
         self._pending_frame: PendingFrame | None = None
@@ -35,8 +40,6 @@ class WebRtcSession:
 
         # 消费方（gRPC StreamDetections）挂载队列
         self.detection_queues: list[asyncio.Queue] = []
-        # 显示线程消费队列
-        self.display_queue: queue.Queue = queue.Queue(maxsize=2)
 
         self.pc.addTransceiver("video", direction="recvonly")
         self.pc.on("track", self._on_track)
@@ -82,7 +85,9 @@ class WebRtcSession:
         exc = task.exception()
         if exc is not None:
             logger.exception(
-                "Video processing task failed for stream %s", self.stream_id, exc_info=exc
+                "Video processing task failed for stream %s",
+                self.stream_id,
+                exc_info=exc,
             )
 
     async def _process_video(self, track: MediaStreamTrack) -> None:
@@ -92,7 +97,9 @@ class WebRtcSession:
         try:
             await asyncio.gather(receiver_task, processor_task)
         except Exception:
-            logger.exception("Unhandled error while processing stream %s", self.stream_id)
+            logger.exception(
+                "Unhandled error while processing stream %s", self.stream_id
+            )
             raise
         finally:
             self.running = False
@@ -127,7 +134,7 @@ class WebRtcSession:
                 last_fps_time = now
 
             if fps > 0.0:
-                self.inference.set_frequency(fps)
+                self.inferencer.set_frequency(fps)
 
             pending = PendingFrame(
                 frame_id=frame_id,
@@ -165,16 +172,11 @@ class WebRtcSession:
             if pending is None:
                 continue
 
-            det = await asyncio.to_thread(self.inference.get_detection, pending.img)
-
-            try:
-                self.display_queue.put_nowait(
-                    (pending.img, pending.fps, pending.pts_ms, pending.frame_id, det)
-                )
-            except queue.Full:
-                pass
-
-            self._push_detection(pending.frame_id, pending.pts_ms, det)
+            det = await asyncio.to_thread(
+                self.inferencer.infer, pending.img, self.score_threshold
+            )
+            if det is not None:
+                self._push_detection(pending.frame_id, pending.pts_ms, det)
 
     @staticmethod
     def _frame_pts_ms(frame) -> int:
@@ -186,11 +188,9 @@ class WebRtcSession:
         self,
         frame_id: int,
         pts_ms: int,
-        det: common_pb2.Detection | None,
-    ) -> None:
-        if not self.detection_queues:
-            return
-        payload = (self.stream_id, str(frame_id), frame_id, pts_ms, det)
+        detection: Tuple[Tuple[float, float], Tuple[float, float], float],
+    ):
+        payload = (self.stream_id, str(frame_id), frame_id, pts_ms, detection)
         for q in self.detection_queues:
             try:
                 q.put_nowait(payload)

@@ -13,8 +13,8 @@ RUN apt update && \
 
 # 拷贝必要的文件以安装依赖
 COPY pyproject.toml poetry.lock README.md ./
-RUN mkdir -p src/artimes_cv && \
-    touch src/artimes_cv/__init__.py && \
+RUN mkdir -p src/artemis_cv && \
+    touch src/artemis_cv/__init__.py && \
     poetry install --no-root
 
 # 拷贝源代码文件
